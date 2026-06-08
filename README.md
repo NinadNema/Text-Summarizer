@@ -75,9 +75,10 @@ npm start
 
 ## Environment Variables
 Create `backend/.env`:
-
+\```
 SECRET_KEY=your_long_random_secret_key_here
 ALLOWED_ORIGINS=http://localhost:3000
+\```
 
 ## Usage
 1. Run the backend — `python run.py` (starts on port 8000)
