@@ -309,8 +309,8 @@ textarea, input[type="text"], input[type="password"], input[type="file"], select
   font-size: 13px;
   color: var(--text);
   background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  /* border: 1px solid var(--border); */
+  /* border-radius: var(--radius-sm);  */
   transition: border-color 0.15s, box-shadow 0.15s, background 0.25s;
   outline: none;
 }

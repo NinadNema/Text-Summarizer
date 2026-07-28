@@ -16,7 +16,7 @@ from app.database import cursor, conn
 # LOAD MODEL
 summarizer = pipeline(
     "summarization",
-    model="facebook/bart-large-cnn"
+    model="sshleifer/distilbart-cnn-12-6"
 )
 
 keyword_extractor = yake.KeywordExtractor(
