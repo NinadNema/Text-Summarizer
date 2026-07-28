@@ -1,6 +1,6 @@
 # SummarAI — AI Text Summarizer
 
-A full-stack AI-powered text summarizer built with React + FastAPI + Facebook BART.
+A full-stack AI-powered text summarizer built with React + FastAPI + DistilBART.
 
 ![Homepage](screenshots/homepage.png)
 ![Summarizer](screenshots/summarizer.png)
@@ -8,7 +8,7 @@ A full-stack AI-powered text summarizer built with React + FastAPI + Facebook BA
 ## Features
 - 🏠 Landing page with feature showcase
 - 🔐 Login / Register modal popup
-- ⚡ AI-powered summaries using Facebook BART
+- ⚡ AI-powered summaries using DistilBART
 - 📄 Upload PDF, DOCX, or TXT files with drag & drop
 - 🎯 4 summary modes — Normal, Academic, Simple, Research
 - 📏 3 summary lengths — Short, Medium, Long
@@ -30,6 +30,7 @@ A full-stack AI-powered text summarizer built with React + FastAPI + Facebook BA
 - **Keywords**: YAKE
 
 ## Project Structure
+```
 Text-Summarizer/
 ├── backend/
 │   ├── app/
@@ -42,17 +43,18 @@ Text-Summarizer/
 │   ├── requirements.txt
 │   └── run.py
 └── frontend/
-├── src/
-│   ├── components/
-│   │   ├── InputPanel.js
-│   │   ├── OptionsPanel.js
-│   │   └── ResultPanel.js
-│   ├── HomePage.js
-│   ├── HomePage.css
-│   ├── App.js
-│   ├── App.css
-│   └── api.js
-└── package.json
+    ├── src/
+    │   ├── components/
+    │   │   ├── InputPanel.js
+    │   │   ├── OptionsPanel.js
+    │   │   └── ResultPanel.js
+    │   ├── HomePage.js
+    │   ├── HomePage.css
+    │   ├── App.js
+    │   ├── App.css
+    │   └── api.js
+    └── package.json
+```
 
 ## Setup
 
