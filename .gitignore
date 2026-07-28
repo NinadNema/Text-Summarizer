@@ -15,3 +15,5 @@ frontend/build/
 # OS
 .DS_Store
 Thumbs.db
+backend/summaries.db-shm
+backend/summaries.db-wal
