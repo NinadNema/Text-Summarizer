@@ -24,7 +24,7 @@ A full-stack AI-powered text summarizer built with React + FastAPI + Facebook BA
 ## Tech Stack
 - **Frontend**: React 19, CSS
 - **Backend**: FastAPI, SQLite, Python
-- **AI Model**: Facebook BART (facebook/bart-large-cnn)
+- **AI Model**: DistilBART (sshleifer/distilbart-cnn-12-6)
 - **Auth**: JWT + bcrypt
 - **PDF**: PyPDF2, jsPDF
 - **Keywords**: YAKE
@@ -75,9 +75,10 @@ npm start
 
 ## Environment Variables
 Create `backend/.env`:
-
+```
 SECRET_KEY=your_long_random_secret_key_here
 ALLOWED_ORIGINS=http://localhost:3000
+```
 
 ## Usage
 1. Run the backend — `python run.py` (starts on port 8000)

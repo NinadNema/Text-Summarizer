@@ -3,6 +3,10 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 
+import warnings
+warnings.filterwarnings("ignore", ".*error reading bcrypt version.*")
+warnings.filterwarnings("ignore", ".*trapped.*")
+
 # SECRET KEY — loaded from environment variable, NOT hardcoded
 # To set it: create a .env file with SECRET_KEY=some_long_random_string
 # and load it in run.py using python-dotenv
