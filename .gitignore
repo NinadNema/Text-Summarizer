@@ -17,3 +17,8 @@ frontend/build/
 Thumbs.db
 backend/summaries.db-shm
 backend/summaries.db-wal
+
+# Pytest
+backend/.pytest_cache/
+backend/tests/__pycache__/
+backend/conftest.py
