@@ -40,6 +40,11 @@ Text-Summarizer/
 │   │   ├── auth.py
 │   │   ├── database.py
 │   │   └── main.py
+│   ├── tests/
+│   │   ├── conftest.py
+│   │   ├── test_auth.py
+│   │   ├── test_summarize.py
+│   │   └── test_api.py
 │   ├── requirements.txt
 │   └── run.py
 └── frontend/
@@ -87,3 +92,11 @@ ALLOWED_ORIGINS=http://localhost:3000
 2. Run the frontend — `npm start` (starts on port 3000)
 3. Open `http://localhost:3000`
 4. Register an account → Login → Start summarizing
+
+## Running Tests
+```bash
+cd backend
+venv\Scripts\activate
+python -m pytest tests/ -v
+```
+26 tests covering auth, summarization, history, file upload, and API endpoints.
