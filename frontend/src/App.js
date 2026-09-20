@@ -632,7 +632,13 @@ function App() {
                                             Input Text
                                         </div>
                                     </div>
-                                    <InputPanel text={text} setText={setText} />
+                                    <InputPanel
+                                        text={text}
+                                        setText={setText}
+                                        onSummarize={handleSummarize}
+                                        disabled={loading}
+                                        onToast={showToast}
+                                    />
                                 </div>
 
                                 <div className="card" style={{ marginTop: "16px" }}>
