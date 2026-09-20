@@ -1,11 +1,5 @@
 import React from "react";
 
-const SAMPLE_TEXT = `Artificial Intelligence (AI) is transforming industries across the globe at an unprecedented pace. From healthcare diagnostics and autonomous transportation to financial modeling and creative arts, machine learning algorithms are discovering patterns in complex datasets that were previously impossible for human analysts to detect.
-
-Modern deep learning architectures, particularly transformer models, have revolutionized natural language processing. These models use self-attention mechanisms to understand contextual relationships between words across long documents, enabling human-like summarization, translation, code generation, and conversational reasoning.
-
-However, widespread deployment of AI also introduces significant ethical and technical challenges. Concerns surrounding algorithmic bias, data privacy, computational energy consumption, and intellectual property rights require robust regulatory frameworks and transparent model governance. As researchers continue to push the frontiers toward more efficient and aligned systems, the collaboration between human expertise and automated intelligence promises to unlock breakthroughs in science, education, and global problem-solving.`;
-
 function InputPanel({ text, setText, onSummarize, disabled, onToast }) {
     const wordCount = text.trim() ? text.trim().split(/\s+/).length : 0;
     const charCount = text.length;
@@ -31,11 +25,6 @@ function InputPanel({ text, setText, onSummarize, disabled, onToast }) {
         }
     };
 
-    const handleSample = () => {
-        setText(SAMPLE_TEXT);
-        if (onToast) onToast("Sample text loaded!");
-    };
-
     const handleClear = () => {
         setText("");
     };
@@ -45,14 +34,6 @@ function InputPanel({ text, setText, onSummarize, disabled, onToast }) {
             {/* TOOLBAR */}
             <div className="input-toolbar">
                 <div className="input-toolbar-left">
-                    <button
-                        type="button"
-                        className="input-tool-btn"
-                        onClick={handleSample}
-                        title="Load sample article"
-                    >
-                        ⚡ Sample Text
-                    </button>
                     <button
                         type="button"
                         className="input-tool-btn"
@@ -97,11 +78,12 @@ function InputPanel({ text, setText, onSummarize, disabled, onToast }) {
                     <span className="stat-badge">{charCount} chars</span>
                 </div>
                 <div className="input-hint">
-                    {text.trim() ? "⚡ Ready to summarize" : "Enter text above or click '⚡ Sample Text'"}
+                    {text.trim() ? "⚡ Ready to summarize" : "Enter or paste text above"}
                 </div>
             </div>
         </div>
     );
 }
 
-export default InputPanel;
+export default InputPanel;
+
