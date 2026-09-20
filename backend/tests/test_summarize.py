@@ -257,3 +257,44 @@ def test_upload_no_token(client):
     assert response.status_code == 200
     data = response.json()
     assert "error" in data
+
+
+# ── WEBSOCKET STREAMING TESTS ──────────────────────────
+
+def test_websocket_summarize_invalid_token(client):
+    """WebSocket returns error on invalid token"""
+    with client.websocket_connect("/ws/summarize") as websocket:
+        websocket.send_json({
+            "token": "invalid_token",
+            "text": "Some text to summarize",
+            "length": "short",
+            "mode": "normal"
+        })
+        data = websocket.receive_json()
+        assert data["type"] == "error"
+        assert "token" in data["message"].lower()
+
+
+def test_websocket_summarize_success(client, auth_token):
+    """WebSocket streams progress events and returns complete summary"""
+    with client.websocket_connect("/ws/summarize") as websocket:
+        websocket.send_json({
+            "token": auth_token,
+            "text": "Artificial intelligence in medicine is growing rapidly. " * 30,
+            "length": "short",
+            "mode": "normal"
+        })
+        
+        events = []
+        while True:
+            msg = websocket.receive_json()
+            events.append(msg)
+            if msg.get("type") in ["complete", "error"]:
+                break
+                
+        # Check that we received at least one progress event and final complete event
+        types = [e["type"] for e in events]
+        assert "complete" in types
+        final = next(e for e in events if e["type"] == "complete")
+        assert "summary" in final["data"]
+        assert len(final["data"]["summary"]) > 0

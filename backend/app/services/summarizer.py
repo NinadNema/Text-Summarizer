@@ -1,3 +1,4 @@
+import torch
 from transformers import pipeline
 import yake
 import nltk
@@ -13,10 +14,14 @@ for resource in ['punkt', 'punkt_tab']:
 from nltk.tokenize import sent_tokenize
 from app.database import cursor, conn
 
+# DEVICE CONFIGURATION — Automatically uses CUDA GPU if available, else falls back to CPU
+DEVICE = 0 if torch.cuda.is_available() else -1
+
 # LOAD MODEL
 summarizer = pipeline(
     "summarization",
-    model="sshleifer/distilbart-cnn-12-6"
+    model="sshleifer/distilbart-cnn-12-6",
+    device=DEVICE
 )
 
 keyword_extractor = yake.KeywordExtractor(
@@ -52,22 +57,64 @@ def chunk_text(text, chunk_size=150):
 
 # RESEARCH PAPER SECTION FILTER
 def extract_research_sections(text):
-    sections = [
+    target_sections = [
         "abstract", "introduction", "methodology",
         "methods", "results", "discussion", "conclusion"
     ]
-    important_content = []
-    paragraphs = text.split("\n")
-    for para in paragraphs:
-        para_lower = para.lower()
-        for section in sections:
-            if section in para_lower:
-                important_content.append(para)
-                break
+    stop_sections = [
+        "references", "bibliography", "acknowledgements", "acknowledgments", "appendix"
+    ]
 
-    if not important_content:
+    lines = [line.strip() for line in text.split("\n")]
+    captured = []
+    current_block = []
+    capturing = False
+
+    for line in lines:
+        if not line:
+            if current_block:
+                captured.append(" ".join(current_block))
+                current_block = []
+            continue
+
+        line_lower = line.lower()
+
+        # Stop capturing if hitting non-content sections like References
+        is_stop = any(
+            line_lower.startswith(s) or line_lower.startswith(f"## {s}") or line_lower.startswith(f"# {s}")
+            for s in stop_sections
+        ) and (len(line.split()) <= 6)
+        if is_stop:
+            capturing = False
+            continue
+
+        # Check if line is a target section header
+        is_target_header = False
+        for sec in target_sections:
+            if (
+                line_lower.startswith(sec)
+                or line_lower.startswith(f"## {sec}")
+                or line_lower.startswith(f"# {sec}")
+                or any(line_lower.startswith(f"{i}. {sec}") or line_lower.startswith(f"{i}.{sec}") for i in range(1, 15))
+                or line_lower.startswith(f"section: {sec}")
+            ):
+                if len(line.split()) <= 15 or ":" in line[:30]:
+                    is_target_header = True
+                    break
+
+        if is_target_header:
+            capturing = True
+            current_block.append(line)
+        elif capturing:
+            current_block.append(line)
+
+    if current_block:
+        captured.append(" ".join(current_block))
+
+    result = " ".join(captured).strip()
+    if not result or len(result.split()) < 30:
         return text
-    return " ".join(important_content)
+    return result
 
 # CLEAN TEXT
 def clean_text(text):
@@ -95,7 +142,7 @@ def get_length_settings(length, word_count_input):
     return chunk_max, chunk_min, target_words
 
 # GENERATE SUMMARY
-def generate_summary(text, length="medium", mode="normal"):
+def generate_summary(text, length="medium", mode="normal", progress_callback=None):
 
     # SUMMARY MODES
     if mode == "academic":
@@ -116,6 +163,8 @@ def generate_summary(text, length="medium", mode="normal"):
     # If text is too short to summarize, return it directly
     word_count_input = len(text.split())
     if word_count_input < 20:
+        if progress_callback:
+            progress_callback(1, 1, "Summary complete")
         return text.strip()
 
     # GET LENGTH SETTINGS
@@ -126,8 +175,12 @@ def generate_summary(text, length="medium", mode="normal"):
     # CHUNKING — split into 150-word chunks
     chunks = chunk_text(text, chunk_size=150)
     chunk_summaries = []
+    total_chunks = len(chunks)
 
-    for chunk in chunks:
+    for idx, chunk in enumerate(chunks, 1):
+        if progress_callback:
+            progress_callback(idx, total_chunks, f"Processing chunk {idx} of {total_chunks}...")
+
         chunk_words = len(chunk.split())
 
         if chunk_words < 20:
@@ -154,6 +207,9 @@ def generate_summary(text, length="medium", mode="normal"):
 
     if not chunk_summaries:
         return text[:500]
+
+    if progress_callback:
+        progress_callback(total_chunks, total_chunks, "Finalizing summary...")
 
     # KEY FIX: Join all chunk summaries WITHOUT recursive compression
     # Recursive compression was squashing everything into 50 words

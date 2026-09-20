@@ -1,6 +1,7 @@
 import os
 import tempfile
-from fastapi import APIRouter, UploadFile, File, Header, HTTPException
+import asyncio
+from fastapi import APIRouter, UploadFile, File, Header, HTTPException, WebSocket, WebSocketDisconnect
 from app.models.request_models import SummaryRequest
 from app.database import cursor, conn
 from app.services.summarizer import (
@@ -17,7 +18,7 @@ from app.auth import (
     create_access_token,
     verify_token
 )
-from PyPDF2 import PdfReader
+from pypdf import PdfReader
 from docx import Document
 
 router = APIRouter()
@@ -302,3 +303,75 @@ async def analyze_text(
         "original_words":      len(request.text.split()),
         "summary_words":       len(summary.split())
     }
+
+
+# -----------------------------------
+# WEBSOCKET REAL-TIME PROGRESS STREAMING
+# -----------------------------------
+@router.websocket("/ws/summarize")
+async def websocket_summarize(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            data = await websocket.receive_json()
+            token = data.get("token", "")
+            user = verify_token(token)
+            if not user:
+                await websocket.send_json({"type": "error", "message": "Invalid or missing token"})
+                continue
+
+            text = data.get("text", "")
+            length = data.get("length", "medium")
+            mode = data.get("mode", "normal")
+
+            if not text.strip():
+                await websocket.send_json({"type": "error", "message": "Text cannot be empty"})
+                continue
+
+            user_id = user["user_id"]
+            loop = asyncio.get_running_loop()
+
+            def sync_progress(current, total, message):
+                percent = round((current / total) * 100) if total > 0 else 0
+                asyncio.run_coroutine_threadsafe(
+                    websocket.send_json({
+                        "type": "progress",
+                        "current": current,
+                        "total": total,
+                        "percent": percent,
+                        "message": message
+                    }),
+                    loop
+                )
+
+            summary = await loop.run_in_executor(
+                None,
+                lambda: generate_summary(text, length, mode, progress_callback=sync_progress)
+            )
+            bullets = generate_bullet_summary(summary)
+            keywords = extract_keywords(text)
+            important = important_sentences(text)
+
+            save_summary(
+                text, summary, mode, length, user_id,
+                bullets, keywords, important
+            )
+
+            await websocket.send_json({
+                "type": "complete",
+                "data": {
+                    "summary":             summary,
+                    "bullets":             bullets,
+                    "keywords":            keywords,
+                    "important_sentences": important,
+                    "original_words":      len(text.split()),
+                    "summary_words":       len(summary.split())
+                }
+            })
+    except WebSocketDisconnect:
+        pass
+    except Exception as e:
+        try:
+            await websocket.send_json({"type": "error", "message": str(e)})
+        except Exception:
+            pass

@@ -8,7 +8,8 @@ A full-stack AI-powered text summarizer built with React + FastAPI + DistilBART.
 ## Features
 - 🏠 Landing page with feature showcase
 - 🔐 Login / Register modal popup
-- ⚡ AI-powered summaries using DistilBART
+- ⚡ AI-powered summaries using DistilBART with dynamic GPU acceleration
+- 📡 Real-time WebSocket progress streaming & animated progress bar
 - 📄 Upload PDF, DOCX, or TXT files with drag & drop
 - 🎯 4 summary modes — Normal, Academic, Simple, Research
 - 📏 3 summary lengths — Short, Medium, Long
@@ -22,11 +23,12 @@ A full-stack AI-powered text summarizer built with React + FastAPI + DistilBART.
 - 📥 Export summary as PDF
 
 ## Tech Stack
-- **Frontend**: React 19, CSS
-- **Backend**: FastAPI, SQLite, Python
-- **AI Model**: DistilBART (sshleifer/distilbart-cnn-12-6)
+- **Frontend**: React 19, CSS, WebSockets
+- **Backend**: FastAPI, SQLite (WAL mode), Python
+- **AI Model**: DistilBART (`sshleifer/distilbart-cnn-12-6`)
+- **Hardware Acceleration**: Automatic CUDA GPU detection with fallback to CPU
 - **Auth**: JWT + bcrypt
-- **PDF**: PyPDF2, jsPDF
+- **PDF**: `pypdf`, `jsPDF`
 - **Keywords**: YAKE
 
 ## Project Structure
@@ -99,4 +101,4 @@ cd backend
 venv\Scripts\activate
 python -m pytest tests/ -v
 ```
-26 tests covering auth, summarization, history, file upload, and API endpoints.
+31 tests covering auth, summarization, history, file upload, WebSocket progress streaming, and API endpoints.

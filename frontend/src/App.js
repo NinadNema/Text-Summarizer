@@ -78,6 +78,7 @@ function App() {
         () => localStorage.getItem("darkMode") === "true"
     );
     const [showPassword, setShowPassword]             = useState(false);
+    const [progress, setProgress]                     = useState(null);
 
     // ── TOAST ─────────────────────────────────────────
     const [toast, setToast] = useState({ message: "", type: "success" });
@@ -196,7 +197,7 @@ function App() {
         setBullets([]); setKeywords([]);
         setImportantSentences([]);
         setOriginalWords(0); setSummaryWords(0);
-        setFile(null);
+        setFile(null); setProgress(null);
         setShowHome(true);
         setShowLoginModal(false);
     };
@@ -208,19 +209,75 @@ function App() {
         setImportantSentences([]);
         setOriginalWords(0); setSummaryWords(0);
         setLength("medium"); setMode("normal");
+        setProgress(null);
         setActivePage("summarize");
     };
 
-    // ── SUMMARIZE ─────────────────────────────────────
+    // ── SUMMARIZE (WEBSOCKET STREAMING + REST FALLBACK) ──
     const handleSummarize = async () => {
         if (!text.trim()) {
             showToast("Please enter text", "error"); return;
         }
-        try {
-            setLoading(true);
-            setSummary(""); setBullets([]); setKeywords([]);
-            setImportantSentences([]); setOriginalWords(0); setSummaryWords(0);
+        setLoading(true);
+        setProgress({ current: 0, total: 0, percent: 0, message: "Connecting..." });
+        setSummary(""); setBullets([]); setKeywords([]);
+        setImportantSentences([]); setOriginalWords(0); setSummaryWords(0);
 
+        const wsUrl = (window.location.protocol === "https:" ? "wss://" : "ws://") +
+                      (window.location.hostname || "127.0.0.1") + ":8000/ws/summarize";
+
+        let wsResolved = false;
+
+        try {
+            const ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                ws.send(JSON.stringify({ token, text, length, mode }));
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const msg = JSON.parse(event.data);
+                    if (msg.type === "progress") {
+                        setProgress(msg);
+                    } else if (msg.type === "complete") {
+                        wsResolved = true;
+                        const data = msg.data;
+                        setSummary(data.summary);
+                        setBullets(data.bullets || []);
+                        setKeywords(data.keywords || []);
+                        setImportantSentences(data.important_sentences || []);
+                        setOriginalWords(data.original_words);
+                        setSummaryWords(data.summary_words);
+                        fetchHistory();
+                        setLoading(false);
+                        setProgress(null);
+                        ws.close();
+                    } else if (msg.type === "error") {
+                        wsResolved = true;
+                        showToast(msg.message || "Error generating summary", "error");
+                        setLoading(false);
+                        setProgress(null);
+                        ws.close();
+                    }
+                } catch (err) {
+                    console.error("WS Parse error:", err);
+                }
+            };
+
+            ws.onerror = async () => {
+                if (!wsResolved) {
+                    await fallbackRestSummarize();
+                }
+            };
+        } catch (e) {
+            await fallbackRestSummarize();
+        }
+    };
+
+    const fallbackRestSummarize = async () => {
+        try {
+            setProgress({ current: 1, total: 1, percent: 50, message: "Generating summary..." });
             const res = await API.post(
                 "/summarize",
                 { text, length, mode },
@@ -236,7 +293,10 @@ function App() {
             fetchHistory();
         } catch (e) {
             showToast(e.response?.data?.error || "Error generating summary", "error");
-        } finally { setLoading(false); }
+        } finally {
+            setLoading(false);
+            setProgress(null);
+        }
     };
 
     // ── FILE UPLOAD ───────────────────────────────────
@@ -612,6 +672,7 @@ function App() {
                                     onDownload={downloadPDF}
                                     onToast={showToast}
                                     loading={loading}
+                                    progress={progress}
                                 />
                             </div>
                         </div>

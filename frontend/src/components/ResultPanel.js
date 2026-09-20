@@ -7,10 +7,24 @@ function Skeleton({ width = "100%", height = "14px", style = {} }) {
     );
 }
 
-// ── SKELETON LOADING STATE ────────────────────────────
-function SkeletonPanel() {
+// ── SKELETON LOADING STATE WITH LIVE PROGRESS ────────────────────
+function SkeletonPanel({ progress }) {
     return (
         <div className="result-panel-wrap">
+            {progress && progress.total > 0 && (
+                <div className="live-progress-box">
+                    <div className="live-progress-header">
+                        <span className="live-progress-msg">⚡ {progress.message || "Generating summary..."}</span>
+                        <span className="live-progress-pct">{progress.percent}%</span>
+                    </div>
+                    <div className="live-progress-bar-track">
+                        <div
+                            className="live-progress-bar-fill"
+                            style={{ width: `${Math.max(5, progress.percent)}%` }}
+                        />
+                    </div>
+                </div>
+            )}
             <div className="stat-grid" style={{ marginBottom: "14px", marginTop: 0 }}>
                 {[1, 2, 3].map((i) => (
                     <div key={i} className="stat-card">
@@ -82,7 +96,8 @@ function ResultPanel({
     summaryWords = 0,
     onDownload,
     onToast,
-    loading
+    loading,
+    progress
 }) {
     const [activeTab, setActiveTab]       = useState("summary");
     const [activeKeyword, setActiveKeyword] = useState(null);
@@ -114,7 +129,7 @@ function ResultPanel({
         setActiveTab("summary");
     };
 
-    if (loading) return <SkeletonPanel />;
+    if (loading) return <SkeletonPanel progress={progress} />;
 
     if (!summary) {
         return (
